@@ -12,8 +12,11 @@ use std::{
     str::FromStr,
     thread,
 };
-use tracing_error::ErrorLayer;
-use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
+use tracing_subscriber::{
+    filter::{FilterExt, Targets},
+    layer::SubscriberExt,
+    EnvFilter, Layer, Registry,
+};
 
 /// `event` defines constants for structured events
 pub mod event {
@@ -200,12 +203,25 @@ pub fn setup_logging(config: &LoggingConfiguration) -> Result<(Logger, GlobalLog
         Box::new(fmt_layer.pretty())
     };
 
+    let tokio_console_filter = Targets::new()
+        .with_target("tokio", tracing::Level::TRACE)
+        .with_target("runtime", tracing::Level::TRACE);
+
+    let fmt_filtered = fmt_layer.with_filter(tokio_console_filter.clone().not());
+
+    let console_layer = console_subscriber::spawn();
+    let console_filtered = console_layer.with_filter(tokio_console_filter);
+
+    // Configure filters with RUST_LOG env var. Format discussed at
+    // https://docs.rs/tracing-subscriber/0.2.20/tracing_subscriber/filter/struct.EnvFilter.html
+    let global_filter = EnvFilter::from_default_env()
+        .add_directive("tokio=trace".parse()?)
+        .add_directive("runtime=trace".parse()?);
+
     let subscriber = Registry::default()
-        .with(fmt_layer)
-        // Configure filters with RUST_LOG env var. Format discussed at
-        // https://docs.rs/tracing-subscriber/0.2.20/tracing_subscriber/filter/struct.EnvFilter.html
-        .with(EnvFilter::from_default_env())
-        .with(ErrorLayer::default());
+        .with(fmt_filtered)
+        .with(console_filtered)
+        .with(global_filter);
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
 

@@ -15,6 +15,7 @@ bitvec = "1"
 bytes = "1.1.0"
 chrono = { version = "0.4", features = ["serde"] }
 clap = "2.34.0"
+console-subscriber = "0.1.3"
 derivative = "2.1.1"
 dyn-clone = "1.0.4"
 elliptic-curve = { version = "0.11.12", features = ["pem"] }
@@ -51,9 +52,8 @@ serde_json = "1.0"
 tempfile = "3.3.0"
 thiserror = "1.0"
 timer = "0.2"
-tokio = { version = "^1.16", features = ["full"] }
+tokio = { version = "^1.16", features = ["full", "tracing"] }
 tracing = "0.1.31"
-tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.9", features = ["env-filter", "json"] }
 ureq = { version = "^2.4", features = ["json"] }
 url = "2.2.2"
